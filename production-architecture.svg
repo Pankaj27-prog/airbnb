@@ -1,0 +1,403 @@
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="prodArchTitle prodArchDesc">
+  <title id="prodArchTitle">Production-Scale Vacation-Rental Marketplace Architecture</title>
+  <desc id="prodArchDesc">Full-scale architecture diagram for an Airbnb-scale marketplace showing scaling strategy across Frontend, Gateway, Microservices, Event Streaming, Storage, Search, and Cloud Deployment.</desc>
+
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap');
+      * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      
+      .bg { fill: #0f172a; }
+      .header-title { font-size: 28px; font-weight: 800; fill: #f8fafc; letter-spacing: -0.5px; }
+      .header-subtitle { font-size: 15px; font-weight: 500; fill: #94a3b8; }
+      .badge-tag { font-size: 12px; font-weight: 700; fill: #38bdf8; }
+      
+      .tier-panel { rx: 14; stroke-width: 1.5; }
+      .tier-title { font-size: 14px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; }
+      .tier-sub { font-size: 11px; font-weight: 500; fill: #64748b; }
+      
+      .node-card { rx: 10; stroke-width: 1.2; filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25)); }
+      .node-title { font-size: 13px; font-weight: 700; }
+      .node-desc { font-size: 11px; font-weight: 500; fill: #cbd5e1; }
+      .node-metric { font-size: 10px; font-weight: 600; }
+      
+      .arrow-line { stroke-width: 1.8; fill: none; stroke-linecap: round; }
+      .arrow-accent { stroke: #38bdf8; }
+      .arrow-purple { stroke: #c084fc; }
+      .arrow-emerald { stroke: #34d399; }
+      .arrow-amber { stroke: #fbbf24; }
+      .arrow-rose { stroke: #fb7185; }
+      .dashed { stroke-dasharray: 6 5; }
+      
+      /* Tier Themes */
+      .tier-client { fill: #1e293b; stroke: #334155; }
+      .tier-client-text { fill: #38bdf8; }
+      
+      .tier-gateway { fill: #1e293b; stroke: #334155; }
+      .tier-gateway-text { fill: #a855f7; }
+      
+      .tier-services { fill: #1e293b; stroke: #334155; }
+      .tier-services-text { fill: #34d399; }
+      
+      .tier-stream { fill: #1e293b; stroke: #334155; }
+      .tier-stream-text { fill: #f59e0b; }
+      
+      .tier-storage { fill: #1e293b; stroke: #334155; }
+      .tier-storage-text { fill: #38bdf8; }
+      
+      .tier-infra { fill: #1e293b; stroke: #334155; }
+      .tier-infra-text { fill: #f43f5e; }
+      
+      /* Card Themes */
+      .card-app { fill: #1e1b4b; stroke: #6366f1; }
+      .card-app-text { fill: #a5b4fc; }
+      
+      .card-cdn { fill: #082f49; stroke: #0284c7; }
+      .card-cdn-text { fill: #7dd3fc; }
+      
+      .card-gw { fill: #2e1065; stroke: #9333ea; }
+      .card-gw-text { fill: #d8b4fe; }
+      
+      .card-srv { fill: #064e3b; stroke: #059669; }
+      .card-srv-text { fill: #6ee7b7; }
+      
+      .card-stream { fill: #451a03; stroke: #d97706; }
+      .card-stream-text { fill: #fcd34d; }
+      
+      .card-db { fill: #0c4a6e; stroke: #0284c7; }
+      .card-db-text { fill: #bae6fd; }
+      
+      .card-ops { fill: #4c0519; stroke: #e11d48; }
+      .card-ops-text { fill: #fda4af; }
+    </style>
+
+    <marker id="arrow-sky" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#38bdf8" />
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#c084fc" />
+    </marker>
+    <marker id="arrow-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#34d399" />
+    </marker>
+    <marker id="arrow-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#fbbf24" />
+    </marker>
+    <marker id="arrow-rose" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L6,3 z" fill="#fb7185" />
+    </marker>
+    
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="50%" stop-color="#818cf8" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Dark Canvas -->
+  <rect width="1600" height="1100" class="bg"/>
+
+  <!-- ================= HEADER SECTION ================= -->
+  <g transform="translate(60, 40)">
+    <rect x="0" y="0" width="1480" height="75" rx="12" fill="#1e293b" stroke="#334155" stroke-width="1.2"/>
+    <circle cx="36" cy="37" r="18" fill="#f43f5e"/>
+    <!-- Airbnb Style Iconic Logo Path -->
+    <path d="M36 26 C33 26, 30 29, 30 33 C30 38, 36 46, 36 46 C36 46, 42 38, 42 33 C42 29, 39 26, 36 26 Z M36 35 C34.5 35, 33.5 34, 33.5 32.5 C33.5 31, 34.5 30, 36 30 C37.5 30, 38.5 31, 38.5 32.5 C38.5 34, 37.5 35, 36 35 Z" fill="#ffffff"/>
+    
+    <text x="68" y="35" class="header-title">Production Vacation-Rental Marketplace Architecture</text>
+    <text x="68" y="58" class="header-subtitle">Scaling Blueprint: Frontend &amp; SSR • API Gateway &amp; BFF • Microservices • Storage &amp; CDC • Geo Search • AWS EKS Deployment</text>
+    
+    <rect x="1310" y="24" width="145" height="28" rx="6" fill="#0369a1"/>
+    <text x="1382" y="43" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="700">SCALE: 100M+ REQS/DAY</text>
+  </g>
+
+  <!-- ================= TIER 1: FRONTEND & EDGE ================= -->
+  <g transform="translate(60, 135)">
+    <rect width="460" height="310" class="tier-panel tier-client"/>
+    <text x="24" y="32" class="tier-title tier-client-text">1. Frontend &amp; Edge CDN Tier</text>
+    <text x="24" y="48" class="tier-sub">Client apps, Edge SSR, Stale-While-Revalidate &amp; Asset Delivery</text>
+
+    <!-- Node: Your App (Listing Detail / PDP) -->
+    <g transform="translate(24, 65)">
+      <rect width="412" height="70" class="node-card card-app"/>
+      <text x="16" y="24" class="node-title card-app-text">Your React App (App.jsx + PhotoTour.jsx)</text>
+      <text x="16" y="42" class="node-desc">Listing PDP, Dynamic Calendar, Guest Picker, Interactive Modal Tour</text>
+      <text x="16" y="58" class="node-metric" fill="#818cf8">• Code-split PhotoTour.jsx via React.lazy() | Bundle: &lt;120KB initial</text>
+    </g>
+
+    <!-- Node: Mobile Clients -->
+    <g transform="translate(24, 145)">
+      <rect width="412" height="50" class="node-card card-app"/>
+      <text x="16" y="22" class="node-title card-app-text">Native Mobile Clients (iOS Swift / Android Kotlin)</text>
+      <text x="16" y="38" class="node-desc">GraphQL Mobile API Consumer with offline draft caching &amp; push sync</text>
+    </g>
+
+    <!-- Node: Edge CDN & WAF -->
+    <g transform="translate(24, 205)">
+      <rect width="412" height="85" class="node-card card-cdn"/>
+      <text x="16" y="22" class="node-title card-cdn-text">Cloudflare Anycast CDN &amp; Edge WAF</text>
+      <text x="16" y="40" class="node-desc">DDoS Shield • Edge HTML Cache (SWR 24h) • SSL Termination</text>
+      <text x="16" y="58" class="node-desc">Cloudflare Images / Lambda@Edge: On-the-fly WebP/AVIF generation</text>
+      <text x="16" y="74" class="node-metric" fill="#38bdf8">• 98.2% Cache Hit Ratio on static assets &amp; pre-rendered PDP HTML</text>
+    </g>
+  </g>
+
+  <!-- ================= TIER 2: GATEWAY & BFF ================= -->
+  <g transform="translate(540, 135)">
+    <rect width="500" height="310" class="tier-panel tier-gateway"/>
+    <text x="24" y="32" class="tier-title tier-gateway-text">2. Gateway, BFF &amp; Service Mesh</text>
+    <text x="24" y="48" class="tier-sub">Traffic routing, GraphQL federation, auth, rate limiting &amp; mTLS</text>
+
+    <!-- Node: Network Load Balancer -->
+    <g transform="translate(24, 65)">
+      <rect width="452" height="50" class="node-card card-gw"/>
+      <text x="16" y="22" class="node-title card-gw-text">AWS Network Load Balancer (NLB)</text>
+      <text x="16" y="38" class="node-desc">Ultra-low latency L4 Passthrough • Multi-AZ Anycast IP Routing</text>
+    </g>
+
+    <!-- Node: BFF & API Gateway -->
+    <g transform="translate(24, 125)">
+      <rect width="452" height="95" class="node-card card-gw"/>
+      <text x="16" y="22" class="node-title card-gw-text">BFF &amp; GraphQL Federation Gateway (Envoy / Viaduct)</text>
+      <text x="16" y="40" class="node-desc">• Schema Stitching: Combines Listing, Pricing, Host &amp; Reviews into 1 query</text>
+      <text x="16" y="58" class="node-desc">• Auth: JWT verification, OAuth2 &amp; Role-Based Access Control (Guest/Host)</text>
+      <text x="16" y="76" class="node-desc">• Distributed Rate Limiting: Redis sliding-window token bucket (per IP/user)</text>
+    </g>
+
+    <!-- Node: Istio Service Mesh -->
+    <g transform="translate(24, 230)">
+      <rect width="452" height="60" class="node-card card-gw"/>
+      <text x="16" y="22" class="node-title card-gw-text">Istio / Envoy Service Mesh</text>
+      <text x="16" y="40" class="node-desc">mTLS Zero-Trust Encryption • Circuit Breaking • Outlier Detection • W3C Tracing</text>
+    </g>
+  </g>
+
+  <!-- ================= TIER 6: DEPLOYMENT & DEVOPS (TOP RIGHT) ================= -->
+  <g transform="translate(1060, 135)">
+    <rect width="480" height="310" class="tier-panel tier-infra"/>
+    <text x="24" y="32" class="tier-title tier-infra-text">6. Cloud Deployment &amp; Observability</text>
+    <text x="24" y="48" class="tier-sub">Elastic Kubernetes, GitOps CI/CD, Canary &amp; Telemetry</text>
+
+    <!-- Node: AWS EKS -->
+    <g transform="translate(24, 65)">
+      <rect width="432" height="70" class="node-card card-ops"/>
+      <text x="16" y="22" class="node-title card-ops-text">AWS EKS Multi-Region Kubernetes</text>
+      <text x="16" y="40" class="node-desc">Pod Autoscaler (HPA) via CPU &amp; Custom RPS Metrics</text>
+      <text x="16" y="58" class="node-metric" fill="#fda4af">• Karpenter: Provisions right-sized Graviton EC2 nodes in &lt;45s</text>
+    </g>
+
+    <!-- Node: GitOps & CI/CD -->
+    <g transform="translate(24, 145)">
+      <rect width="432" height="70" class="node-card card-ops"/>
+      <text x="16" y="22" class="node-title card-ops-text">GitOps &amp; Progressive Delivery (ArgoCD)</text>
+      <text x="16" y="40" class="node-desc">Canary rollouts (5% -&gt; 25% -&gt; 100%) with automated rollbacks</text>
+      <text x="16" y="58" class="node-metric" fill="#fda4af">• Rollback threshold: &gt;0.05% error rate or &gt;15% P99 latency drift</text>
+    </g>
+
+    <!-- Node: Observability Stack -->
+    <g transform="translate(24, 225)">
+      <rect width="432" height="65" class="node-card card-ops"/>
+      <text x="16" y="22" class="node-title card-ops-text">Full-Stack Observability &amp; SRE</text>
+      <text x="16" y="40" class="node-desc">OpenTelemetry Traces • Prometheus Metrics • Datadog APM • PagerDuty</text>
+      <text x="16" y="56" class="node-metric" fill="#fda4af">• P99 Latency SLA: &lt;150ms for PDP | Availability: 99.99%</text>
+    </g>
+  </g>
+
+  <!-- ================= TIER 3: MICROSERVICES DOMAIN ================= -->
+  <g transform="translate(60, 470)">
+    <rect width="1480" height="230" class="tier-panel tier-services"/>
+    <text x="24" y="32" class="tier-title tier-services-text">3. Core Domain Microservices Tier (Docker Containers on Kubernetes EKS)</text>
+    <text x="24" y="48" class="tier-sub">Domain-Driven Design (DDD) with decoupled services communicating via gRPC (synchronous) and Kafka (asynchronous)</text>
+
+    <!-- Service 1: Search & Ranking -->
+    <g transform="translate(24, 65)">
+      <rect width="225" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Search &amp; Ranking</text>
+      <text x="14" y="44" class="node-desc">Geo-proximity query (H3)</text>
+      <text x="14" y="62" class="node-desc">Two-stage ML candidate rank</text>
+      <text x="14" y="80" class="node-desc">Personalized guest scoring</text>
+      <rect x="14" y="105" width="197" height="24" rx="4" fill="#047857"/>
+      <text x="112" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">&lt; 35ms Geo Response</text>
+    </g>
+
+    <!-- Service 2: Listing Management -->
+    <g transform="translate(265, 65)">
+      <rect width="225" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Listing Service</text>
+      <text x="14" y="44" class="node-desc">Feeds your App.jsx PDP</text>
+      <text x="14" y="62" class="node-desc">Amenity specs, house rules</text>
+      <text x="14" y="80" class="node-desc">Photo metadata &amp; albums</text>
+      <rect x="14" y="105" width="197" height="24" rx="4" fill="#047857"/>
+      <text x="112" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">Cached in Redis L2</text>
+    </g>
+
+    <!-- Service 3: Booking & Reservation Engine -->
+    <g transform="translate(506, 65)">
+      <rect width="235" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Booking Engine</text>
+      <text x="14" y="44" class="node-desc">Saga Orchestrator (2-phase)</text>
+      <text x="14" y="62" class="node-desc">Distributed lock (Redlock)</text>
+      <text x="14" y="80" class="node-desc">Zero double-booking lock</text>
+      <rect x="14" y="105" width="207" height="24" rx="4" fill="#047857"/>
+      <text x="117" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">Strict ACID Guarantees</text>
+    </g>
+
+    <!-- Service 4: Availability & Calendar -->
+    <g transform="translate(757, 65)">
+      <rect width="225" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Availability Service</text>
+      <text x="14" y="44" class="node-desc">365-day Date Bitmaps</text>
+      <text x="14" y="62" class="node-desc">O(1) Date range bitwise check</text>
+      <text x="14" y="80" class="node-desc">Instant date block/release</text>
+      <rect x="14" y="105" width="197" height="24" rx="4" fill="#047857"/>
+      <text x="112" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">Sub-millisecond Checks</text>
+    </g>
+
+    <!-- Service 5: Dynamic Pricing & Surge -->
+    <g transform="translate(998, 65)">
+      <rect width="225" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Pricing Engine</text>
+      <text x="14" y="44" class="node-desc">Seasonal surge, length discounts</text>
+      <text x="14" y="62" class="node-desc">Taxes, cleaning fee calculation</text>
+      <text x="14" y="80" class="node-desc">Multi-currency conversion</text>
+      <rect x="14" y="105" width="197" height="24" rx="4" fill="#047857"/>
+      <text x="112" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">Rule + ML Price Model</text>
+    </g>
+
+    <!-- Service 6: Payments & Trust -->
+    <g transform="translate(1239, 65)">
+      <rect width="217" height="145" class="node-card card-srv"/>
+      <text x="14" y="24" class="node-title card-srv-text">Payments &amp; Escrow</text>
+      <text x="14" y="44" class="node-desc">Stripe / Adyen integration</text>
+      <text x="14" y="62" class="node-desc">Double-entry ledger</text>
+      <text x="14" y="80" class="node-desc">Payouts on 24h post-checkin</text>
+      <rect x="14" y="105" width="189" height="24" rx="4" fill="#047857"/>
+      <text x="108" y="121" text-anchor="middle" font-size="10" font-weight="700" fill="#ecfdf5">PCI-DSS Compliant</text>
+    </g>
+  </g>
+
+  <!-- ================= TIER 4: EVENT STREAMING & CDC ================= -->
+  <g transform="translate(60, 720)">
+    <rect width="1480" height="95" class="tier-panel tier-stream"/>
+    <text x="24" y="26" class="tier-title tier-stream-text">4. Event Streaming &amp; Change Data Capture (CDC)</text>
+    
+    <!-- Kafka Event Spine -->
+    <g transform="translate(24, 38)">
+      <rect width="450" height="45" class="node-card card-stream"/>
+      <text x="14" y="18" class="node-title card-stream-text">Apache Kafka Distributed Event Spine</text>
+      <text x="14" y="34" class="node-desc">Topics: listing.updated • booking.reserved • payment.settled • review.created</text>
+    </g>
+
+    <!-- Debezium CDC -->
+    <g transform="translate(490, 38)">
+      <rect width="460" height="45" class="node-card card-stream"/>
+      <text x="14" y="18" class="node-title card-stream-text">Debezium Change Data Capture (CDC)</text>
+      <text x="14" y="34" class="node-desc">Non-blocking replication from Aurora Postgres WAL logs into Kafka (&lt;200ms)</text>
+    </g>
+
+    <!-- Flink Stream Processing -->
+    <g transform="translate(966, 38)">
+      <rect width="490" height="45" class="node-card card-stream"/>
+      <text x="14" y="18" class="node-title card-stream-text">Apache Flink Real-time Stream Analytics</text>
+      <text x="14" y="34" class="node-desc">Real-time Search Index Sync • Fraud Velocity Detection • Dynamic Pricing Features</text>
+    </g>
+  </g>
+
+  <!-- ================= TIER 5: POLYGLOT STORAGE & SEARCH ================= -->
+  <g transform="translate(60, 835)">
+    <rect width="1480" height="235" class="tier-panel tier-storage"/>
+    <text x="24" y="30" class="tier-title tier-storage-text">5. Polyglot Storage &amp; Search Engine Clusters</text>
+    <text x="24" y="46" class="tier-sub">Data storage architecture matched strictly to access patterns (Read/Write ratios, ACID vs Eventual Consistency)</text>
+
+    <!-- DB 1: Sharded Aurora PostgreSQL -->
+    <g transform="translate(24, 60)">
+      <rect width="275" height="155" class="node-card card-db"/>
+      <text x="14" y="24" class="node-title card-db-text">Aurora PostgreSQL (OLTP)</text>
+      <text x="14" y="44" class="node-desc">Primary relational transactional store</text>
+      <text x="14" y="62" class="node-desc">Sharded by hash(listing_id)</text>
+      <text x="14" y="80" class="node-desc">Bookings, Hosts, Financial Ledgers</text>
+      <text x="14" y="98" class="node-desc">Multi-AZ Read Replicas (Auto-scale)</text>
+      <rect x="14" y="118" width="247" height="24" rx="4" fill="#0369a1"/>
+      <text x="137" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#f0f9ff">ACID • Row Versioning</text>
+    </g>
+
+    <!-- DB 2: Redis Cluster -->
+    <g transform="translate(315, 60)">
+      <rect width="275" height="155" class="node-card card-db"/>
+      <text x="14" y="24" class="node-title card-db-text">Redis Cluster (L2 Distributed)</text>
+      <text x="14" y="44" class="node-desc">Calendar Availability Bitmaps (GETBIT)</text>
+      <text x="14" y="62" class="node-desc">Distributed Locking (Redlock Mutex)</text>
+      <text x="14" y="80" class="node-desc">Listing metadata cache (TTL 1 hr)</text>
+      <text x="14" y="98" class="node-desc">User session &amp; active cart states</text>
+      <rect x="14" y="118" width="247" height="24" rx="4" fill="#0369a1"/>
+      <text x="137" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#f0f9ff">Sub-millisecond Latency</text>
+    </g>
+
+    <!-- DB 3: Elasticsearch / OpenSearch -->
+    <g transform="translate(606, 60)">
+      <rect width="285" height="155" class="node-card card-db"/>
+      <text x="14" y="24" class="node-title card-db-text">OpenSearch / Elasticsearch</text>
+      <text x="14" y="44" class="node-desc">Geo-distance &amp; Bounding-box search</text>
+      <text x="14" y="62" class="node-desc">Sharded by Uber H3 Hexagonal Grid</text>
+      <text x="14" y="80" class="node-desc">Inverted index: Amenities, Price, Type</text>
+      <text x="14" y="98" class="node-desc">Vector index for semantic search</text>
+      <rect x="14" y="118" width="257" height="24" rx="4" fill="#0369a1"/>
+      <text x="142" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#f0f9ff">Near Real-Time (&lt;500ms sync)</text>
+    </g>
+
+    <!-- DB 4: DynamoDB / Cassandra -->
+    <g transform="translate(907, 60)">
+      <rect width="275" height="155" class="node-card card-db"/>
+      <text x="14" y="24" class="node-title card-db-text">DynamoDB / Cassandra</text>
+      <text x="14" y="44" class="node-desc">High-write throughput key-value</text>
+      <text x="14" y="62" class="node-desc">Guest &lt;-&gt; Host Chat Messenger</text>
+      <text x="14" y="80" class="node-desc">Audit logs &amp; user notification inbox</text>
+      <text x="14" y="98" class="node-desc">Idempotency request tokens</text>
+      <rect x="14" y="118" width="247" height="24" rx="4" fill="#0369a1"/>
+      <text x="137" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#f0f9ff">Unlimited Horizontal Scale</text>
+    </g>
+
+    <!-- DB 5: S3 & Data Warehouse -->
+    <g transform="translate(1198, 60)">
+      <rect width="258" height="155" class="node-card card-db"/>
+      <text x="14" y="24" class="node-title card-db-text">S3 Media + ClickHouse Lake</text>
+      <text x="14" y="44" class="node-desc">AWS S3 / Cloudflare R2 (Photos)</text>
+      <text x="14" y="62" class="node-desc">Pre-signed upload URLs for hosts</text>
+      <text x="14" y="80" class="node-desc">ClickHouse / Snowflake OLAP</text>
+      <text x="14" y="98" class="node-desc">Dynamic pricing training &amp; reports</text>
+      <rect x="14" y="118" width="230" height="24" rx="4" fill="#0369a1"/>
+      <text x="129" y="134" text-anchor="middle" font-size="10" font-weight="700" fill="#f0f9ff">Petabyte Scale Analytics</text>
+    </g>
+  </g>
+
+  <!-- ================= CONNECTING DATA FLOW ARROWS ================= -->
+  <!-- 1. WebApp -> CDN -->
+  <path d="M290 270 L290 340" class="arrow-line arrow-accent" marker-end="url(#arrow-sky)"/>
+  
+  <!-- 2. CDN -> Gateway NLB -->
+  <path d="M494 380 L564 225" class="arrow-line arrow-accent" marker-end="url(#arrow-sky)"/>
+
+  <!-- 3. Gateway NLB -> BFF Gateway -->
+  <path d="M790 250 L790 260" class="arrow-line arrow-purple" marker-end="url(#arrow-purple)"/>
+
+  <!-- 4. BFF Gateway -> Service Mesh -->
+  <path d="M790 355 L790 365" class="arrow-line arrow-purple" marker-end="url(#arrow-purple)"/>
+
+  <!-- 5. Service Mesh -> Microservices -->
+  <path d="M790 425 L790 535" class="arrow-line arrow-emerald" marker-end="url(#arrow-emerald)"/>
+  <path d="M790 460 L196 535" class="arrow-line arrow-emerald" marker-end="url(#arrow-emerald)"/>
+  <path d="M790 460 L400 535" class="arrow-line arrow-emerald" marker-end="url(#arrow-emerald)"/>
+  <path d="M790 460 L1120 535" class="arrow-line arrow-emerald" marker-end="url(#arrow-emerald)"/>
+  <path d="M790 460 L1350 535" class="arrow-line arrow-emerald" marker-end="url(#arrow-emerald)"/>
+
+  <!-- 6. Microservices -> Kafka -->
+  <path d="M623 680 L623 758" class="arrow-line arrow-amber dashed" marker-end="url(#arrow-amber)"/>
+  <path d="M377 680 L377 758" class="arrow-line arrow-amber dashed" marker-end="url(#arrow-amber)"/>
+
+  <!-- 7. Aurora Postgres -> Debezium CDC -->
+  <path d="M221 895 L221 800 L550 800" class="arrow-line arrow-amber dashed" marker-end="url(#arrow-amber)"/>
+
+  <!-- 8. Flink -> Elasticsearch Index Sync -->
+  <path d="M1211 803 L748 895" class="arrow-line arrow-accent dashed" marker-end="url(#arrow-sky)"/>
+
+</svg>

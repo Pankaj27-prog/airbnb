@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Production Vacation-Rental Marketplace Architecture | Scaling Blueprint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #111827;
+      --bg-card-hover: #1f2937;
+      --border-color: #1e293b;
+      --border-highlight: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #ff385c; /* Airbnb coral */
+      --sky: #38bdf8;
+      --purple: #c084fc;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --rose: #fb7185;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      line-height: 1.6;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* Top Navigation */
+    header {
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      background: var(--primary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(255, 56, 92, 0.4);
+    }
+
+    .brand-icon svg {
+      width: 22px;
+      height: 22px;
+      fill: white;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .brand-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #e00b41;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-main);
+      border-color: var(--border-highlight);
+    }
+
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--sky);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1540px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* Filter Pill Bar */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 24px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+    }
+
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: #1e293b;
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .filter-btn.active, .filter-btn:hover {
+      background: #334155;
+      color: #fff;
+      border-color: var(--sky);
+    }
+
+    /* Diagram Canvas Container */
+    .diagram-viewport {
+      background: #0b1120;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .viewport-controls {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .viewport-btn {
+      background: #1e293b;
+      color: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .viewport-btn:hover {
+      background: #334155;
+    }
+
+    .svg-scroll-wrapper {
+      overflow: auto;
+      max-height: 850px;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .svg-scroll-wrapper img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+
+    /* Scaling Strategy Cards Grid */
+    .strategy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 20px;
+      margin-top: 36px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 24px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: var(--border-highlight);
+    }
+
+    .card-badge {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+
+    .badge-frontend { background: rgba(56, 189, 248, 0.15); color: var(--sky); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-backend { background: rgba(192, 132, 252, 0.15); color: var(--purple); border: 1px solid rgba(192, 132, 252, 0.3); }
+    .badge-storage { background: rgba(52, 211, 153, 0.15); color: var(--emerald); border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-search { background: rgba(251, 191, 36, 0.15); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-deploy { background: rgba(251, 113, 133, 0.15); color: var(--rose); border: 1px solid rgba(251, 113, 133, 0.3); }
+
+    .card h3 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .card p {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    .card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .card li {
+      font-size: 0.83rem;
+      color: #cbd5e1;
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .card li::before {
+      content: "•";
+      color: var(--sky);
+      font-weight: bold;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    /* Modal for Excalidraw / Mermaid code */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #0f172a;
+      border: 1px solid var(--border-highlight);
+      border-radius: 16px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-body {
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.82rem;
+      background: #030712;
+      display: block;
+      padding: 16px;
+      border-radius: 8px;
+      color: #7dd3fc;
+      overflow-x: auto;
+      border: 1px solid #1e293b;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #059669;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+      z-index: 2000;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+      </div>
+      <div>
+        <div class="brand-title">Vacation Rental Architecture Blueprint</div>
+        <div class="brand-subtitle">Production-Scale Scaling Strategy alongside App.jsx &amp; PhotoTour.jsx</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" onclick="openModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+        Copy for Excalidraw / Lucidchart
+      </button>
+      <a href="production-architecture.svg" download="airbnb-production-architecture.svg" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Download SVG
+      </a>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <main class="container">
+
+    <!-- Interactive Diagram Viewport -->
+    <div class="diagram-viewport">
+      <div class="viewport-controls">
+        <button class="viewport-btn" onclick="zoomIn()" title="Zoom In">+</button>
+        <button class="viewport-btn" onclick="zoomOut()" title="Zoom Out">-</button>
+        <button class="viewport-btn" onclick="resetZoom()" title="Reset Zoom">↺</button>
+      </div>
+      <div class="svg-scroll-wrapper" id="svgContainer">
+        <img id="archImg" src="production-architecture.svg" alt="Vacation Rental Production Architecture" style="transform-origin: center top; transition: transform 0.2s ease;">
+      </div>
+    </div>
+
+    <!-- 5 Scaling Pillars Breakdown -->
+    <h2 style="margin-top: 48px; margin-bottom: 8px; font-size: 1.5rem; font-weight: 800;">5 Architectural Scaling Pillars</h2>
+    <p style="color: var(--text-muted); margin-bottom: 24px;">Comprehensive technical breakdown of how each subsystem handles high concurrency, low latency, and zero single points of failure.</p>
+
+    <div class="strategy-grid">
+      
+      <!-- 1. Frontend -->
+      <div class="card">
+        <span class="card-badge badge-frontend">1. Frontend Scaling</span>
+        <h3>Edge Caching &amp; Code Splitting</h3>
+        <p>Bridging your local React application (App.jsx + PhotoTour.jsx) to serve global traffic with &lt;50ms First Contentful Paint.</p>
+        <ul>
+          <li><strong>Dynamic Code Splitting:</strong> Modal photo galleries like <code>PhotoTour.jsx</code> lazy-load via <code>React.lazy()</code> to keep initial JS bundles under 120KB.</li>
+          <li><strong>Edge SSR &amp; ISR:</strong> Pre-rendered Listing Detail Pages (PDP) cached at Cloudflare/CloudFront edge nodes with Stale-While-Revalidate (SWR).</li>
+          <li><strong>Responsive Image Pipeline:</strong> RAW image assets transformed on-the-fly into WebP/AVIF srcset thumbnails at the edge.</li>
+        </ul>
+      </div>
+
+      <!-- 2. Backend -->
+      <div class="card">
+        <span class="card-badge badge-backend">2. Backend Scaling</span>
+        <h3>BFF Gateway &amp; Microservices</h3>
+        <p>Domain-Driven Design (DDD) with GraphQL Federation (Airbnb Viaduct model) to aggregate data in a single roundtrip.</p>
+        <ul>
+          <li><strong>No Over-fetching:</strong> BFF resolves Listing details, Host verification, and Reviews in parallel via gRPC internal calls.</li>
+          <li><strong>Preventing Double Bookings:</strong> Distributed locking via Redis <code>Redlock</code> leases a lock on <code>listing_id + dates</code> for 10 minutes.</li>
+          <li><strong>Circuit Breaking:</strong> Resilient fallbacks ensure listing details render even if the Reviews or Messaging microservice degrades.</li>
+        </ul>
+      </div>
+
+      <!-- 3. Storage -->
+      <div class="card">
+        <span class="card-badge badge-storage">3. Storage Scaling</span>
+        <h3>Polyglot Persistence</h3>
+        <p>Targeting distinct database engines to access patterns rather than relying on a single monolithic database.</p>
+        <ul>
+          <li><strong>Aurora PostgreSQL Sharding:</strong> Sharded horizontally by <code>hash(listing_id)</code> with multi-AZ auto-scaling read replicas.</li>
+          <li><strong>Redis Availability Bitmaps:</strong> 365-day availability vectors (0=open, 1=booked) checked in O(1) time via bitwise operations.</li>
+          <li><strong>DynamoDB:</strong> Handles high-throughput chat messages between guests and hosts, audit trails, and request idempotency tokens.</li>
+        </ul>
+      </div>
+
+      <!-- 4. Search -->
+      <div class="card">
+        <span class="card-badge badge-search">4. Search Scaling</span>
+        <h3>Elasticsearch &amp; Geo-Spatial H3</h3>
+        <p>Sub-second search across millions of listings with geo-bounding boxes, calendar dates, and ML candidate ranking.</p>
+        <ul>
+          <li><strong>Uber H3 Hexagonal Geo-Sharding:</strong> Maps listings to discrete hexagonal spatial cells, pruning 99% of irrelevant cluster nodes.</li>
+          <li><strong>CDC via Debezium &amp; Kafka:</strong> Database transaction logs are replicated into Elasticsearch in &lt;500ms without dual-write code bugs.</li>
+          <li><strong>Two-Stage ML Ranking:</strong> Elasticsearch retrieves top 1,000 matches, followed by a personalized scoring model (GBDT/TF Serving).</li>
+        </ul>
+      </div>
+
+      <!-- 5. Deployment -->
+      <div class="card">
+        <span class="card-badge badge-deploy">5. Deployment &amp; Ops</span>
+        <h3>Elastic Kubernetes &amp; GitOps</h3>
+        <p>Multi-Region cloud deployment guaranteeing 99.99% uptime and automated disaster recovery.</p>
+        <ul>
+          <li><strong>AWS EKS + Karpenter:</strong> Horizontal Pod Autoscaler dynamically provisions right-sized ARM Graviton nodes in &lt;45s.</li>
+          <li><strong>ArgoCD Canary Rollouts:</strong> Incremental traffic shifting (5% -&gt; 25% -&gt; 100%) with automated rollbacks on error spike.</li>
+          <li><strong>End-to-End Observability:</strong> Distributed tracing with OpenTelemetry, Prometheus metrics, and Datadog APM for &lt;150ms P99 latency.</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Modal for Copying Excalidraw / Lucidchart Mermaid -->
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-size: 1.1rem; color: #fff;">Import into Excalidraw or Lucidchart</h3>
+        <button style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer;" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 12px;">
+          Both <strong>Excalidraw</strong> and <strong>Lucidchart</strong> support direct Mermaid diagram import.
+        </p>
+        <ol style="margin-left: 20px; font-size: 0.84rem; color: #94a3b8; margin-bottom: 16px; display: flex; flex-direction: column; gap: 4px;">
+          <li><strong>In Excalidraw:</strong> Click the Menu (top left) &rarr; <em>Insert</em> &rarr; <em>Mermaid to Excalidraw</em> &rarr; Paste below.</li>
+          <li><strong>In Lucid.app:</strong> Click <em>File</em> &rarr; <em>Import Data</em> &rarr; <em>Mermaid</em> &rarr; Paste below.</li>
+        </ol>
+        <pre><code id="mermaidCodeBlock">flowchart TB
+    subgraph ClientEdge["1. CLIENT &amp; EDGE / CDN TIER"]
+        WebApp["Your React Web App (App.jsx PDP &amp; PhotoTour)"]
+        MobileApp["iOS / Android Mobile Native Apps"]
+        EdgeCDN["Cloudflare Anycast CDN &amp; WAF (Edge SSR / Image Optimizer)"]
+        WebApp --&gt; EdgeCDN
+        MobileApp --&gt; EdgeCDN
+    end
+
+    subgraph GatewayMesh["2. GATEWAY &amp; SERVICE MESH"]
+        NLB["AWS Network Load Balancer (NLB)"]
+        APIGateway["BFF &amp; GraphQL Federation (Viaduct / Envoy)"]
+        ServiceMesh["Istio Service Mesh (mTLS &amp; Circuit Breaking)"]
+        EdgeCDN --&gt; NLB
+        NLB --&gt; APIGateway
+        APIGateway --&gt; ServiceMesh
+    end
+
+    subgraph ServicesTier["3. CORE DOMAIN MICROSERVICES (AWS EKS)"]
+        SearchService["Search &amp; Ranking Service"]
+        ListingService["Listing Service (Feeds App.jsx)"]
+        BookingService["Booking Engine (Saga Coordinator)"]
+        AvailabilityService["Availability Service (365-day Bitmaps)"]
+        PricingService["Dynamic Pricing Engine"]
+        PaymentService["Payments &amp; Escrow (PCI-DSS)"]
+        ServiceMesh --&gt; SearchService
+        ServiceMesh --&gt; ListingService
+        ServiceMesh --&gt; BookingService
+        ServiceMesh --&gt; AvailabilityService
+        ServiceMesh --&gt; PricingService
+        ServiceMesh --&gt; PaymentService
+    end
+
+    subgraph StreamingTier["4. EVENT STREAMING &amp; CDC"]
+        Kafka["Apache Kafka Distributed Event Spine"]
+        Debezium["Debezium Change Data Capture (CDC)"]
+        Flink["Apache Flink Real-time Stream Analytics"]
+        BookingService -.-&gt;|Events| Kafka
+        ListingService -.-&gt;|Events| Kafka
+        Debezium -.-&gt; Kafka
+        Kafka --&gt; Flink
+    end
+
+    subgraph DataTier["5. POLYGLOT STORAGE &amp; SEARCH"]
+        AuroraPG["Aurora PostgreSQL (Sharded by listing_id)"]
+        RedisCluster["Redis Cluster (Availability Bitmaps &amp; Redlock)"]
+        OpenSearch["OpenSearch / Elasticsearch (H3 Geo-Spatial)"]
+        DynamoDB["DynamoDB (Messenger &amp; Idempotency Keys)"]
+        S3Storage["AWS S3 / Cloudflare R2 (Listing Photos)"]
+        ListingService --&gt; RedisCluster
+        AvailabilityService --&gt; RedisCluster
+        BookingService --&gt; AuroraPG
+        SearchService --&gt; OpenSearch
+        Flink --&gt; OpenSearch
+        AuroraPG -.-&gt; Debezium
+        ListingService --&gt; S3Storage
+    end</code></pre>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">Close</button>
+        <button class="btn btn-primary" onclick="copyMermaid()">Copy Mermaid Code</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Mermaid code copied to clipboard!</div>
+
+  <script>
+    let currentZoom = 1;
+    const img = document.getElementById('archImg');
+    const toast = document.getElementById('toast');
+
+    function zoomIn() {
+      currentZoom = Math.min(currentZoom + 0.15, 2.5);
+      img.style.transform = `scale(${currentZoom})`;
+    }
+
+    function zoomOut() {
+      currentZoom = Math.max(currentZoom - 0.15, 0.5);
+      img.style.transform = `scale(${currentZoom})`;
+    }
+
+    function resetZoom() {
+      currentZoom = 1;
+      img.style.transform = `scale(1)`;
+    }
+
+    function openModal() {
+      document.getElementById('modalBackdrop').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('open');
+    }
+
+    function copyMermaid() {
+      const code = document.getElementById('mermaidCodeBlock').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        showToast('Mermaid code copied to clipboard!');
+        closeModal();
+      });
+    }
+
+    function showToast(msg) {
+      toast.innerText = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+  </script>
+</body>
+</html>
